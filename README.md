@@ -180,7 +180,7 @@ $ SSM_LOG_LEVEL=debug aws-parameter-bulk get jsonparam1, jsonparam2 --injson --u
 
 # Web UI
 
-Start with parameter "web" to start a web ui on (http://localhost:8888)[http://localhost:8888].
+Start with parameter "web" to start a web ui on [http://localhost:8888](http://localhost:8888).
 Change the listen ip and port with the `--address` flag.
 
 ````bash
