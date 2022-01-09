@@ -1,0 +1,82 @@
+{{template "base" .}}
+
+{{define "title"}}AWS Parameter Bulk{{end}}
+
+{{define "body"}}
+
+    <div class="container-fluid">
+
+        {{$csrfToken := .CSRFToken}}
+        {{$namesLeft := .NamesLeft}}
+        {{$namesRight := .NamesRight}}
+        {{$jsonLeft := .JsonLeft}}
+        {{$jsonRight := .JsonRight}}
+
+        {{with .Form}}
+            {{with .Errors.Get "generic"}}
+                <div class='alert alert-danger'>{{.}}</div>
+            {{end}}
+            <form action='/' method='POST' novalidate>
+                <div class="row">
+                    <div class="col">
+                        <input type='hidden' name='csrf_token' value='{{$csrfToken}}'>
+                        <div class="input-group mb-2">
+                          <textarea class="form-control" style="font-family:Monospace;" placeholder="SSM Names"
+                                  name="namesleft" id="namesleft">{{$namesLeft}}</textarea>
+                        </div>
+                        <input type="checkbox" name="jsonleft" id="jsonleft" {{if $jsonLeft}}checked{{end}}>
+                        <label class="form-check-label" for="jsonleft">Interpret all values as JSON</label>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Load and Compare</button>
+                    </div>
+                    <div class="col">
+                        <div class="input-group mb-1">
+                            <textarea class="form-control" style="font-family:Monospace;"
+                                      placeholder="SSM Names to compare to" name="namesright"
+                                      id="namesright">{{$namesRight}}</textarea>
+                        </div>
+                        <input type="checkbox" name="jsonright" id="jsonright" {{if $jsonRight}}checked{{end}}>
+                        <label class="form-check-label" for="jsonright">Interpret all values as JSON</label>
+                    </div>
+                </div>
+            </form>
+                <div class="row">
+                    <div class="col text-center">
+                        <form action='/reset' method='POST' novalidate>
+                            <input type='hidden' name='csrf_token' value='{{$csrfToken}}'>
+                            <button type="submit" class="btn btn-secondary">Reset Values</button>
+                        </form>
+                    </div>
+                </div>
+        {{end}}
+        <br/>
+
+        {{ range $key, $comp := .Compare }}
+            <div class="row">
+                <div class="col">
+                    <form action='' method='POST' novalidate>
+                        <span class="input-group-text">{{$comp.LeftName}}&nbsp;</span>
+                        <div class="input-group mb-3">
+                            <textarea class="form-control" style="font-family:Monospace;" name="ssmvalue"
+                                      id="{{$comp.LeftName}}">{{$comp.LeftValue}}</textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-auto">
+                    <button class="btn {{if .Different}}btn-danger{{end}}">=</button>
+                </div>
+                <div class="col">
+                    <form action='' method='POST' novalidate>
+                        <span class="input-group-text">{{$comp.RightName}}&nbsp;</span>
+                        <div class="input-group mb-3">
+                            <textarea class="form-control" style="font-family:Monospace;" name="ssmvalue"
+                                      id="{{$comp.LeftName}}">{{$comp.RightValue}}</textarea>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {{end}}
+
+    </div>
+{{end}}
