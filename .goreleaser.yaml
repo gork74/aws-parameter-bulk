@@ -39,6 +39,7 @@ archives:
     files:
       - LICENSE
       - README.md
+      - ui/*
 checksum:
   name_template: 'checksums.txt'
 snapshot:
