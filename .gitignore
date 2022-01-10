@@ -67,3 +67,6 @@ coverage.html
 .env
 
 bin/
+
+dist/
+.DS_Store
