@@ -48,6 +48,18 @@ func (sp *MockSSM) GetParameters(input *ssm.GetParametersInput) (*ssm.GetParamet
 		output.Parameters = append(output.Parameters, &ssm.Parameter{Name: &name1, Value: aws.String("ThreeVal1")})
 		output.Parameters = append(output.Parameters, &ssm.Parameter{Name: &name2, Value: aws.String("ThreeVal2")})
 	}
+	if nameString(*input) == "[Num0]" {
+		name1 := "Num0"
+		output.Parameters = append(output.Parameters, &ssm.Parameter{Name: &name1, Value: aws.String("0")})
+	}
+	if nameString(*input) == "[Json]" {
+		name1 := "Json"
+		output.Parameters = append(output.Parameters, &ssm.Parameter{Name: &name1, Value: aws.String("{\"Str\": \"0\",\"Int\": 0,\"Int123\": 123}")})
+	}
+	if nameString(*input) == "[Json2]" {
+		name1 := "Json2"
+		output.Parameters = append(output.Parameters, &ssm.Parameter{Name: &name1, Value: aws.String("{\"Bool\": true}")})
+	}
 	return output, sp.err
 }
 
@@ -163,32 +175,47 @@ func Test_ExpandJsonParams(t *testing.T) {
 	input["one"] = `{"One1":"OneVal1","One2":"OneVal2"}`
 	input["two"] = `{"Two1":"TwoVal1","Two2":"TwoVal2"}`
 	tests := []struct {
-		name string
-		want string
+		name  string
+		upper bool
+		want  string
 	}{
 		{
-			name: "One1",
-			want: "OneVal1",
+			name:  "One1",
+			upper: false,
+			want:  "OneVal1",
 		},
 		{
-			name: "One2",
-			want: "OneVal2",
+			name:  "ONE1",
+			upper: true,
+			want:  "OneVal1",
 		},
 		{
-			name: "Two1",
-			want: "TwoVal1",
+			name:  "One2",
+			upper: false,
+			want:  "OneVal2",
 		},
 		{
-			name: "Two2",
-			want: "TwoVal2",
+			name:  "ONE2",
+			upper: true,
+			want:  "OneVal2",
+		},
+		{
+			name:  "Two1",
+			upper: false,
+			want:  "TwoVal1",
+		},
+		{
+			name:  "Two2",
+			upper: false,
+			want:  "TwoVal2",
 		},
 	}
-	result, err := ExpandJsonParams(input)
-	if err != nil {
-		t.Error("Error expanding json Params")
-	}
-	t.Logf("%s", result)
 	for _, tt := range tests {
+		result, err := ExpandJsonParams(input, tt.upper)
+		if err != nil {
+			t.Error("Error expanding json Params")
+		}
+		t.Logf("%s", result)
 		t.Run(tt.name, func(t *testing.T) {
 			if result[tt.name] != tt.want {
 				t.Errorf("Expected %s but got %s", tt.want, result[tt.name])
@@ -281,6 +308,33 @@ func Test_GetParams(t *testing.T) {
 			upper:   false,
 			quote:   true,
 			want:    "One1=\"OneVal1\"\nOne2=\"OneVal2\"\nThree1=\"ThreeVal1\"\nThree2=\"ThreeVal2\"\n",
+		},
+		{
+			params:  "Num0",
+			injson:  false,
+			outjson: false,
+			export:  false,
+			upper:   true,
+			quote:   false,
+			want:    "NUM0=0\n",
+		},
+		{
+			params:  "Json",
+			injson:  true,
+			outjson: false,
+			export:  false,
+			upper:   true,
+			quote:   false,
+			want:    "INT=0\nINT123=123\nSTR=0\n",
+		},
+		{
+			params:  "Json2",
+			injson:  true,
+			outjson: false,
+			export:  false,
+			upper:   true,
+			quote:   false,
+			want:    "BOOL=true\n",
 		},
 	}
 	for _, tt := range tests {

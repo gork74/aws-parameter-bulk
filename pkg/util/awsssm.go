@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 	"github.com/rs/zerolog/log"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 )
@@ -302,13 +303,25 @@ func ExpandJson(value string) (map[string]string, error) {
 		return nil, err
 	}
 	for jkey := range jsonMap {
-		log.Debug().Str("jkey", jkey).Interface("jsonMap[jkey]", jsonMap[jkey]).Msg("ExpandJson jsonMap")
-		result[jkey] = fmt.Sprintf("%s", jsonMap[jkey])
+		valueType := reflect.TypeOf(jsonMap[jkey])
+		log.Debug().Str("jkey", jkey).Interface("jsonMap[jkey]", jsonMap[jkey]).Interface("valueType", valueType).Msg("ExpandJson jsonMap")
+		switch jsonMap[jkey].(type) {
+		case int, int8, int16, int32, int64:
+			result[jkey] = fmt.Sprintf("%v", jsonMap[jkey])
+		case float32, float64:
+			// Integer "0" and float "0.0" result in a float type and hence are
+			// indistinguishable here, and output as integer
+			result[jkey] = fmt.Sprintf("%v", jsonMap[jkey])
+		case bool:
+			result[jkey] = fmt.Sprintf("%t", jsonMap[jkey])
+		default:
+			result[jkey] = fmt.Sprintf("%s", jsonMap[jkey])
+		}
 	}
 	return result, nil
 }
 
-func ExpandJsonParams(params map[string]string) (map[string]string, error) {
+func ExpandJsonParams(params map[string]string, upperFlag bool) (map[string]string, error) {
 	result := make(map[string]string)
 
 	for name, value := range params {
@@ -320,8 +333,9 @@ func ExpandJsonParams(params map[string]string) (map[string]string, error) {
 			return nil, err
 		}
 		for jkey := range valueMap {
+			resultKey := getUpper(jkey, upperFlag)
 			log.Debug().Msgf("valueMap: %s = %s", jkey, valueMap[jkey])
-			result[jkey] = fmt.Sprintf("%s", valueMap[jkey])
+			result[resultKey] = fmt.Sprintf("%s", valueMap[jkey])
 		}
 	}
 	return result, nil
@@ -380,7 +394,7 @@ func (f *AWSSSM) GetParams(paramstring *string, inJsonFlag bool, upperFlag bool)
 	}
 
 	if inJsonFlag {
-		results, err = ExpandJsonParams(results)
+		results, err = ExpandJsonParams(results, upperFlag)
 		if err != nil {
 			log.Error().Msg(err.Error())
 			return results, err
