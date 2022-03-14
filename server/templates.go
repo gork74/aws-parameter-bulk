@@ -14,16 +14,18 @@ func InitTemplates() {
 }
 
 type templateData struct {
-	NamesLeft  string
-	JsonLeft   bool
-	NamesRight string
-	JsonRight  bool
-	Different  bool
-	CSRFToken  string
-	Flash      string
-	FlashError string
-	Form       *forms.Form
-	Compare    []models.ValueCompare
+	NamesLeft      string
+	JsonLeft       bool
+	RecursiveLeft  bool
+	NamesRight     string
+	JsonRight      bool
+	RecursiveRight bool
+	Different      bool
+	CSRFToken      string
+	Flash          string
+	FlashError     string
+	Form           *forms.Form
+	Compare        []models.ValueCompare
 }
 
 // Initialize a template.FuncMap object and store it in a global variable. This is

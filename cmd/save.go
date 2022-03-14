@@ -23,12 +23,21 @@ func init() { // nolint: gochecknoinits
 			}
 			inJsonFlag, _ := cmd.Flags().GetBool("injson")
 			dryFlag, _ := cmd.Flags().GetBool("dry")
+			flags := util.Flags{
+				false,
+				inJsonFlag,
+				false,
+				false,
+				false,
+				dryFlag,
+				false,
+				false,
+			}
 			log.Debug().Msgf("Filename: %s Path: %s", fileName, path)
-			log.Debug().Msgf("Input JSON: %t", inJsonFlag)
-			log.Debug().Msgf("Dry: %v", dryFlag)
+			log.Debug().Msgf("Flags: %+v", flags)
 
 			ssmClient := util.NewSSM()
-			err := ssmClient.SaveParametersFromFile(fileName, path, inJsonFlag, dryFlag)
+			err := ssmClient.SaveParametersFromFile(fileName, path, flags)
 			if err != nil {
 				log.Error().Msg(err.Error())
 				return

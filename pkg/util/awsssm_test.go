@@ -67,11 +67,22 @@ func (sp *MockSSM) GetParametersByPath(input *ssm.GetParametersByPathInput) (*ss
 	output := new(ssm.GetParametersByPathOutput)
 	params := make([]*ssm.Parameter, 0)
 	if *input.Path == "/path" {
-		params = append(params, &ssm.Parameter{Name: aws.String("One1"), Value: aws.String("OneVal1")})
+		params = append(params, &ssm.Parameter{Name: aws.String("/path/One1"), Value: aws.String("OneVal1")})
 	}
 	if *input.Path == "/path2" {
-		params = append(params, &ssm.Parameter{Name: aws.String("One1"), Value: aws.String("OneVal1")})
-		params = append(params, &ssm.Parameter{Name: aws.String("One2"), Value: aws.String("OneVal2")})
+		params = append(params, &ssm.Parameter{Name: aws.String("/path2/One1"), Value: aws.String("OneVal1")})
+		params = append(params, &ssm.Parameter{Name: aws.String("/path2/One2"), Value: aws.String("OneVal2")})
+	}
+	if *input.Path == "/path3" {
+		params = append(params, &ssm.Parameter{Name: aws.String("/path3/Name3"), Value: aws.String("Val3")})
+	}
+	if *input.Path == "/path3/sub" {
+		params = append(params, &ssm.Parameter{Name: aws.String("/path3/sub/NameSub"), Value: aws.String("SubVal")})
+	}
+	if *input.Recursive {
+		if *input.Path == "/path3" {
+			params = append(params, &ssm.Parameter{Name: aws.String("/path3/sub/NameSub"), Value: aws.String("SubVal")})
+		}
 	}
 	output.Parameters = params
 	return output, sp.err
@@ -174,6 +185,7 @@ func Test_ExpandJsonParams(t *testing.T) {
 	input := make(map[string]string)
 	input["one"] = `{"One1":"OneVal1","One2":"OneVal2"}`
 	input["two"] = `{"Two1":"TwoVal1","Two2":"TwoVal2"}`
+
 	tests := []struct {
 		name  string
 		upper bool
@@ -211,7 +223,17 @@ func Test_ExpandJsonParams(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		result, err := ExpandJsonParams(input, tt.upper)
+		flags := Flags{
+			false,
+			false,
+			false,
+			tt.upper,
+			false,
+			false,
+			true,
+			false,
+		}
+		result, err := ExpandJsonParams(input, flags)
 		if err != nil {
 			t.Error("Error expanding json Params")
 		}
@@ -229,112 +251,205 @@ func Test_GetParams(t *testing.T) {
 	input["One"] = `{"One1":"OneVal1","One2":"OneVal2"}`
 	input["Two"] = `{"Two1":"TwoVal1","Two2":"TwoVal2"}`
 	tests := []struct {
-		params  string
-		injson  bool
-		outjson bool
-		export  bool
-		upper   bool
-		quote   bool
-		want    string
+		params string
+		flags  Flags
+		want   string
 	}{
 		{
-			params:  "/path",
-			injson:  false,
-			outjson: false,
-			export:  false,
-			upper:   true,
-			quote:   false,
-			want:    "ONE1=OneVal1\n",
+			params: "/path",
+			flags: Flags{
+				false,
+				false,
+				false,
+				true,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "ONE1=OneVal1\n",
 		},
 		{
-			params:  "/path",
-			injson:  false,
-			outjson: false,
-			export:  false,
-			upper:   false,
-			quote:   false,
-			want:    "One1=OneVal1\n",
+			params: "/path",
+			flags: Flags{
+				false,
+				false,
+				false,
+				false,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "One1=OneVal1\n",
 		},
 		{
-			params:  "/path,/path2",
-			injson:  false,
-			outjson: false,
-			export:  false,
-			upper:   true,
-			quote:   false,
-			want:    "ONE1=OneVal1\nONE2=OneVal2\n",
+			params: "/path,/path2",
+			flags: Flags{
+				false,
+				false,
+				false,
+				true,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "ONE1=OneVal1\nONE2=OneVal2\n",
 		},
 		{
-			params:  "One1",
-			injson:  false,
-			outjson: false,
-			export:  false,
-			upper:   true,
-			quote:   false,
-			want:    "ONE1=OneVal1\n",
+			params: "One1",
+			flags: Flags{
+				false,
+				false,
+				false,
+				true,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "ONE1=OneVal1\n",
 		},
 		{
-			params:  "One1,One2",
-			injson:  false,
-			outjson: false,
-			export:  false,
-			upper:   true,
-			quote:   false,
-			want:    "ONE1=OneVal1\nONE2=OneVal2\n",
+			params: "One1,One2",
+			flags: Flags{
+				false,
+				false,
+				false,
+				true,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "ONE1=OneVal1\nONE2=OneVal2\n",
 		},
 		{
-			params:  "/path,Three1,Three2,/path2",
-			injson:  false,
-			outjson: false,
-			export:  false,
-			upper:   true,
-			quote:   false,
-			want:    "ONE1=OneVal1\nONE2=OneVal2\nTHREE1=ThreeVal1\nTHREE2=ThreeVal2\n",
+			params: "/path,Three1,Three2,/path2",
+			flags: Flags{
+				false,
+				false,
+				false,
+				true,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "ONE1=OneVal1\nONE2=OneVal2\nTHREE1=ThreeVal1\nTHREE2=ThreeVal2\n",
 		},
 		{
-			params:  "/path,Three1,Three2,/path2",
-			injson:  false,
-			outjson: false,
-			export:  false,
-			upper:   false,
-			quote:   false,
-			want:    "One1=OneVal1\nOne2=OneVal2\nThree1=ThreeVal1\nThree2=ThreeVal2\n",
+			params: "/path,Three1,Three2,/path2",
+			flags: Flags{
+				false,
+				false,
+				false,
+				false,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "One1=OneVal1\nOne2=OneVal2\nThree1=ThreeVal1\nThree2=ThreeVal2\n",
 		},
 		{
-			params:  "/path,Three1,Three2,/path2",
-			injson:  false,
-			outjson: false,
-			export:  false,
-			upper:   false,
-			quote:   true,
-			want:    "One1=\"OneVal1\"\nOne2=\"OneVal2\"\nThree1=\"ThreeVal1\"\nThree2=\"ThreeVal2\"\n",
+			params: "/path,Three1,Three2,/path2",
+			flags: Flags{
+				false,
+				false,
+				false,
+				false,
+				true,
+				false,
+				true,
+				false,
+			},
+			want: "One1=\"OneVal1\"\nOne2=\"OneVal2\"\nThree1=\"ThreeVal1\"\nThree2=\"ThreeVal2\"\n",
 		},
 		{
-			params:  "Num0",
-			injson:  false,
-			outjson: false,
-			export:  false,
-			upper:   true,
-			quote:   false,
-			want:    "NUM0=0\n",
+			params: "Num0",
+			flags: Flags{
+				false,
+				false,
+				false,
+				true,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "NUM0=0\n",
 		},
 		{
-			params:  "Json",
-			injson:  true,
-			outjson: false,
-			export:  false,
-			upper:   true,
-			quote:   false,
-			want:    "INT=0\nINT123=123\nSTR=0\n",
+			params: "Json",
+			flags: Flags{
+				false,
+				true,
+				false,
+				true,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "INT=0\nINT123=123\nSTR=0\n",
 		},
 		{
-			params:  "Json2",
-			injson:  true,
-			outjson: false,
-			export:  false,
-			upper:   true,
-			quote:   false,
-			want:    "BOOL=true\n",
+			params: "Json2",
+			flags: Flags{
+				false,
+				true,
+				false,
+				true,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "BOOL=true\n",
+		},
+		{
+			params: "/path3",
+			flags: Flags{
+				false,
+				false,
+				false,
+				true,
+				false,
+				false,
+				true,
+				false,
+			},
+			want: "NAME3=Val3\nNAMESUB=SubVal\n",
+		},
+		{
+			params: "/path3",
+			flags: Flags{
+				false,
+				false,
+				false,
+				true,
+				false,
+				false,
+				false,
+				false,
+			},
+			want: "NAME3=Val3\n",
+		},
+		{
+			params: "/path3",
+			flags: Flags{
+				false,
+				false,
+				false,
+				false,
+				false,
+				false,
+				true,
+				true,
+			},
+			want: "/path3/Name3=Val3\n/path3/sub/NameSub=SubVal\n",
 		},
 	}
 	for _, tt := range tests {
@@ -343,11 +458,11 @@ func Test_GetParams(t *testing.T) {
 			ssmClient.SSM = &MockSSM{
 				err: nil, //errors.New("my custom error"),
 			}
-			result, err := ssmClient.GetParams(&tt.params, tt.injson, tt.upper)
+			result, err := ssmClient.GetParams(&tt.params, tt.flags)
 			if err != nil {
 				t.Error("Error in GetParams")
 			}
-			output, err := ssmClient.GetOutputString(result, tt.outjson, tt.export, tt.quote)
+			output, err := ssmClient.GetOutputString(result, tt.flags)
 			outputStr := fmt.Sprintf("%s", output)
 			wantStr := fmt.Sprintf("%s", tt.want)
 			if outputStr != wantStr {

@@ -10,7 +10,9 @@
         {{$namesLeft := .NamesLeft}}
         {{$namesRight := .NamesRight}}
         {{$jsonLeft := .JsonLeft}}
+        {{$recursiveLeft := .RecursiveLeft}}
         {{$jsonRight := .JsonRight}}
+        {{$recursiveRight := .RecursiveRight}}
 
         {{with .Form}}
             {{with .Errors.Get "generic"}}
@@ -24,6 +26,8 @@
                           <textarea class="form-control" style="font-family:Monospace;" placeholder="SSM Names"
                                   name="namesleft" id="namesleft">{{$namesLeft}}</textarea>
                         </div>
+                        <input type="checkbox" name="recursiveleft" id="recursiveleft" {{if $recursiveLeft}}checked{{end}}>
+                        <label class="form-check-label" for="recursiveleft">Read paths recursive</label>
                         <input type="checkbox" name="jsonleft" id="jsonleft" {{if $jsonLeft}}checked{{end}}>
                         <label class="form-check-label" for="jsonleft">Interpret all values as JSON</label>
                     </div>
@@ -36,6 +40,8 @@
                                       placeholder="SSM Names to compare to" name="namesright"
                                       id="namesright">{{$namesRight}}</textarea>
                         </div>
+                        <input type="checkbox" name="recursiveright" id="recursiveright" {{if $recursiveLeft}}checked{{end}}>
+                        <label class="form-check-label" for="recursiveright">Read paths recursive</label>
                         <input type="checkbox" name="jsonright" id="jsonright" {{if $jsonRight}}checked{{end}}>
                         <label class="form-check-label" for="jsonright">Interpret all values as JSON</label>
                     </div>

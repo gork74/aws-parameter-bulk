@@ -26,7 +26,7 @@ build:
 
 .PHONY: dev
 dev:
-	LOG_LEVEL=debug go run main/main.go
+	SSM_LOG_LEVEL=debug go run main/main.go
 
 # install goreleaser first
 .PHONE: release-snapshot

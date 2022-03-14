@@ -49,19 +49,20 @@ func Test_application_postHome(t *testing.T) {
 	t.Log(csrfToken)
 
 	tests := []struct {
-		name      string
-		namesleft string
-		nameright string
-		jsonleft  bool
-		csrfToken string
-		wantCode  int
-		wantBody  []byte
+		name          string
+		namesleft     string
+		nameright     string
+		jsonleft      bool
+		recursiveleft bool
+		csrfToken     string
+		wantCode      int
+		wantBody      []byte
 	}{
-		{"Empty namesleft and namesright", "", "", true, csrfToken, http.StatusOK, []byte("Names not valid")},
-		{"Valid namesleft", "Three1", "", false, csrfToken, http.StatusOK, []byte(">ThreeVal1<")},
-		{"Empty namesleft but namesright", "", "One1", false, csrfToken, http.StatusOK, []byte("Names not valid")},
-		{"Valid namesleft and namesright", "One1", "One2", false, csrfToken, http.StatusOK, []byte(">OneVal2<")},
-		{"Invalid CSRF Token", "One1", "", false, "wrongToken", http.StatusBadRequest, nil},
+		{"Empty namesleft and namesright", "", "", true, true, csrfToken, http.StatusOK, []byte("Names not valid")},
+		{"Valid namesleft", "Three1", "", false, true, csrfToken, http.StatusOK, []byte(">ThreeVal1<")},
+		{"Empty namesleft but namesright", "", "One1", false, true, csrfToken, http.StatusOK, []byte("Names not valid")},
+		{"Valid namesleft and namesright", "One1", "One2", false, true, csrfToken, http.StatusOK, []byte(">OneVal2<")},
+		{"Invalid CSRF Token", "One1", "", false, true, "wrongToken", http.StatusBadRequest, nil},
 	}
 
 	for _, tt := range tests {

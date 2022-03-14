@@ -21,6 +21,17 @@ var (
 	ErrNameNotFound = errors.New("Name not found")
 )
 
+type Flags struct {
+	Export     bool
+	InJson     bool
+	OutJson    bool
+	Upper      bool
+	Quote      bool
+	Dry        bool
+	Recursive  bool
+	PrefixPath bool
+}
+
 type AWSSSM struct {
 	session *session.Session
 	SSM     ssmiface.SSMAPI
@@ -59,10 +70,14 @@ func NewSSM() *AWSSSM {
 	}
 }
 
-func getNameAndValue(param *ssm.Parameter, upperFlag bool) (string, string, error) {
-	split := strings.Split(*param.Name, "/")
-	name := split[len(split)-1]
-	return getUpper(name, upperFlag), *param.Value, nil
+func getNameAndValue(param *ssm.Parameter, flags Flags) (string, string, error) {
+	if flags.PrefixPath {
+		return getUpper(*param.Name, flags), *param.Value, nil
+	} else {
+		split := strings.Split(*param.Name, "/")
+		name := split[len(split)-1]
+		return getUpper(name, flags), *param.Value, nil
+	}
 }
 
 func chunkParamNames(paramNames []*string, chunkSize int) [][]*string {
@@ -79,7 +94,7 @@ func chunkParamNames(paramNames []*string, chunkSize int) [][]*string {
 	return chunks
 }
 
-func (f *AWSSSM) GetParametersByPath(paths []string, upperFlag bool) (map[string]string, error) {
+func (f *AWSSSM) GetParametersByPath(paths []string, flags Flags) (map[string]string, error) {
 	params := make(map[string]string)
 
 	// retrieve params for all paths
@@ -91,7 +106,7 @@ func (f *AWSSSM) GetParametersByPath(paths []string, upperFlag bool) (map[string
 		for !done {
 			input := &ssm.GetParametersByPathInput{
 				Path:           &path,
-				Recursive:      &trueBool,
+				Recursive:      &flags.Recursive,
 				WithDecryption: &trueBool,
 			}
 
@@ -110,7 +125,7 @@ func (f *AWSSSM) GetParametersByPath(paths []string, upperFlag bool) (map[string
 			}
 
 			for _, param := range output.Parameters {
-				name, value, _ := getNameAndValue(param, upperFlag)
+				name, value, _ := getNameAndValue(param, flags)
 				log.Debug().Msgf("Name: %s Value %s", name, value)
 				params[name] = value
 			}
@@ -127,7 +142,7 @@ func (f *AWSSSM) GetParametersByPath(paths []string, upperFlag bool) (map[string
 	return params, nil
 }
 
-func (f *AWSSSM) GetParameters(ssmnames []*string, upperFlag bool) (map[string]string, error) {
+func (f *AWSSSM) GetParameters(ssmnames []*string, flags Flags) (map[string]string, error) {
 	params := make(map[string]string)
 
 	// GetParameters only supports at max of 10 params
@@ -157,7 +172,7 @@ func (f *AWSSSM) GetParameters(ssmnames []*string, upperFlag bool) (map[string]s
 		log.Debug().Msgf("Retrieved Parameters: %s", output.Parameters)
 
 		for _, param := range output.Parameters {
-			name, value, _ := getNameAndValue(param, upperFlag)
+			name, value, _ := getNameAndValue(param, flags)
 			log.Debug().Msgf("NAME: %s VALUE: %s", name, value)
 			params[name] = value
 		}
@@ -166,7 +181,7 @@ func (f *AWSSSM) GetParameters(ssmnames []*string, upperFlag bool) (map[string]s
 	return params, nil
 }
 
-func (f *AWSSSM) ReadParametersFromFile(fileName string, path string, inJsonFlag bool) (map[string]string, error) {
+func (f *AWSSSM) ReadParametersFromFile(fileName string, path string, flags Flags) (map[string]string, error) {
 	params := make(map[string]string)
 
 	if path != "" {
@@ -181,7 +196,7 @@ func (f *AWSSSM) ReadParametersFromFile(fileName string, path string, inJsonFlag
 		}
 	}
 
-	if inJsonFlag {
+	if flags.InJson {
 		dat, err := os.ReadFile(fileName)
 		if err != nil {
 			log.Error().Msg(err.Error())
@@ -217,18 +232,18 @@ func (f *AWSSSM) ReadParametersFromFile(fileName string, path string, inJsonFlag
 	return params, nil
 }
 
-func (f *AWSSSM) SaveParametersFromFile(fileName string, basePath string, inJsonFlag bool, dryFlag bool) error {
-	params, err := f.ReadParametersFromFile(fileName, basePath, inJsonFlag)
+func (f *AWSSSM) SaveParametersFromFile(fileName string, basePath string, flags Flags) error {
+	params, err := f.ReadParametersFromFile(fileName, basePath, flags)
 	if err != nil {
 		log.Error().Msg(err.Error())
 		return err
 	}
-	if dryFlag {
+	if flags.Dry {
 		prefix := ""
 		if basePath != "" {
 			prefix = basePath + "/"
 		}
-		result := OutputParamsAsString(params, prefix, false)
+		result := OutputParamsAsString(params, prefix, flags)
 		fmt.Println("### Dry run, not saving, this would have been set:")
 		fmt.Println(result)
 		return nil
@@ -279,11 +294,11 @@ func GetSortedNamesFromParams(params map[string]string) []string {
 }
 
 // outputs the parameters as string sorted by name
-func OutputParamsAsString(params map[string]string, prefix string, quoteFlag bool) string {
+func OutputParamsAsString(params map[string]string, prefix string, flags Flags) string {
 	names := GetSortedNamesFromParams(params)
 	var result = ""
 	for _, name := range names {
-		if quoteFlag {
+		if flags.Quote {
 			result += fmt.Sprintf("%s%s=\"%s\"\n", prefix, name, params[name])
 		} else {
 			result += fmt.Sprintf("%s%s=%s\n", prefix, name, params[name])
@@ -321,7 +336,7 @@ func ExpandJson(value string) (map[string]string, error) {
 	return result, nil
 }
 
-func ExpandJsonParams(params map[string]string, upperFlag bool) (map[string]string, error) {
+func ExpandJsonParams(params map[string]string, flags Flags) (map[string]string, error) {
 	result := make(map[string]string)
 
 	for name, value := range params {
@@ -333,7 +348,7 @@ func ExpandJsonParams(params map[string]string, upperFlag bool) (map[string]stri
 			return nil, err
 		}
 		for jkey := range valueMap {
-			resultKey := getUpper(jkey, upperFlag)
+			resultKey := getUpper(jkey, flags)
 			log.Debug().Msgf("valueMap: %s = %s", jkey, valueMap[jkey])
 			result[resultKey] = fmt.Sprintf("%s", valueMap[jkey])
 		}
@@ -341,14 +356,14 @@ func ExpandJsonParams(params map[string]string, upperFlag bool) (map[string]stri
 	return result, nil
 }
 
-func getUpper(param string, upperFlag bool) string {
-	if upperFlag {
+func getUpper(param string, flags Flags) string {
+	if flags.Upper {
 		return strings.ToUpper(param)
 	}
 	return param
 }
 
-func (f *AWSSSM) GetParams(paramstring *string, inJsonFlag bool, upperFlag bool) (map[string]string, error) {
+func (f *AWSSSM) GetParams(paramstring *string, flags Flags) (map[string]string, error) {
 	results := make(map[string]string)
 
 	params := SplitParams(paramstring)
@@ -371,7 +386,7 @@ func (f *AWSSSM) GetParams(paramstring *string, inJsonFlag bool, upperFlag bool)
 		}
 	}
 
-	pathResults, err := f.GetParametersByPath(pathNames, upperFlag)
+	pathResults, err := f.GetParametersByPath(pathNames, flags)
 	if err != nil {
 		log.Error().Msg(err.Error())
 		return results, err
@@ -382,7 +397,7 @@ func (f *AWSSSM) GetParams(paramstring *string, inJsonFlag bool, upperFlag bool)
 		results[name] = value
 	}
 
-	singleResults, err := f.GetParameters(paramNames, upperFlag)
+	singleResults, err := f.GetParameters(paramNames, flags)
 	if err != nil {
 		log.Error().Msg(err.Error())
 		return results, err
@@ -393,8 +408,8 @@ func (f *AWSSSM) GetParams(paramstring *string, inJsonFlag bool, upperFlag bool)
 		results[name] = value
 	}
 
-	if inJsonFlag {
-		results, err = ExpandJsonParams(results, upperFlag)
+	if flags.InJson {
+		results, err = ExpandJsonParams(results, flags)
 		if err != nil {
 			log.Error().Msg(err.Error())
 			return results, err
@@ -403,21 +418,21 @@ func (f *AWSSSM) GetParams(paramstring *string, inJsonFlag bool, upperFlag bool)
 	return results, nil
 }
 
-func (f *AWSSSM) GetOutputString(results map[string]string, outJsonFlag bool, exportFlag bool, quoteFlag bool) (string, error) {
-	if exportFlag && outJsonFlag {
+func (f *AWSSSM) GetOutputString(results map[string]string, flags Flags) (string, error) {
+	if flags.Export && flags.OutJson {
 		log.Error().Msg("--export and --outjson can not be used together")
 		return "", errors.New("export and outjson can not be used together")
 	}
 
 	var result string
-	if outJsonFlag {
+	if flags.OutJson {
 		json, _ := json.MarshalIndent(results, "", "  ")
 		result = fmt.Sprint(string(json))
 	} else {
-		if exportFlag {
-			result = OutputParamsAsString(results, "export ", quoteFlag)
+		if flags.Export {
+			result = OutputParamsAsString(results, "export ", flags)
 		} else {
-			result = OutputParamsAsString(results, "", quoteFlag)
+			result = OutputParamsAsString(results, "", flags)
 		}
 	}
 	return result, nil

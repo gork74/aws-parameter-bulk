@@ -53,21 +53,50 @@ func (app *application) postHome(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonLeft := false
 	jsonRight := false
+	recursiveLeft := false
+	recursiveRight := false
 
 	form := forms.New(r.PostForm)
 	form.Required("namesleft")
 	namesLeft := strings.TrimSpace(form.Get("namesleft"))
 	namesRight := strings.TrimSpace(form.Get("namesright"))
 	jsonLeftFlag := form.Get("jsonleft")
+	recursiveLeftFlag := form.Get("recursiveleft")
 	jsonRightFlag := form.Get("jsonright")
+	recursiveRightFlag := form.Get("recursiveright")
 	if jsonLeftFlag == "on" {
 		jsonLeft = true
+	}
+	if recursiveLeftFlag == "on" {
+		recursiveLeft = true
 	}
 	if jsonRightFlag == "on" {
 		jsonRight = true
 	}
+	if recursiveRightFlag == "on" {
+		recursiveRight = true
+	}
+	flagsLeft := util.Flags{
+		false,
+		jsonLeft,
+		false,
+		false,
+		false,
+		false,
+		recursiveLeft,
+		false,
+	}
+	flagsRight := util.Flags{
+		false,
+		jsonRight,
+		false,
+		false,
+		false,
+		false,
+		recursiveRight,
+		false,
+	}
 
-	app.logger.Debug().Msgf("Namesleft: '%s'", namesLeft)
 	app.logger.Debug().Msgf("Namesright: '%s'", namesRight)
 	app.logger.Debug().Msgf("JsonLeft: '%s'", jsonLeftFlag)
 	app.logger.Debug().Msgf("JsonRight: '%s'", jsonRightFlag)
@@ -86,7 +115,7 @@ func (app *application) postHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resultLeft, err := app.ssmClient.GetParams(&namesLeft, jsonLeft, false)
+	resultLeft, err := app.ssmClient.GetParams(&namesLeft, flagsLeft)
 	if err != nil {
 		app.logger.Error().Msg(err.Error())
 		app.session.Put(r.Context(), "flasherror", "Error reading values from the left side input: "+err.Error())
@@ -110,7 +139,7 @@ func (app *application) postHome(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if namesRight != "" {
-		resultRight, err := app.ssmClient.GetParams(&namesRight, jsonRight, false)
+		resultRight, err := app.ssmClient.GetParams(&namesRight, flagsRight)
 		if err != nil {
 			app.logger.Error().Msg(err.Error())
 			app.session.Put(r.Context(), "flasherror", "Error reading values from the right side input: "+err.Error())

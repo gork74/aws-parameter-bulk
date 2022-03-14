@@ -20,28 +20,38 @@ func init() { // nolint: gochecknoinits
 			"This can be piped into an file (> .env), to be included via --env-file=.env\n" +
 			"or to be set in a shell environment (not recommended): export $(cat .env).\n" +
 			"Note: name output is unique, if two paths parameters have the same name, the value of the last name in the list wins\n" +
-			"Use --help for help on the flags: --export --injson --outjson --upper --quote",
+			"Use --help for help on the flags: --export --injson --outjson --upper --quote --norecursive --prefixpath",
 		Run: func(cmd *cobra.Command, args []string) {
 			exportFlag, _ := cmd.Flags().GetBool("export")
 			inJsonFlag, _ := cmd.Flags().GetBool("injson")
-			outJsonFlag, _ := cmd.Flags().GetBool("outjson")
+			outJsonFlag, _ := cmd.Flags().GetBool("injson")
 			upperFlag, _ := cmd.Flags().GetBool("upper")
 			quoteFlag, _ := cmd.Flags().GetBool("quote")
+			// use recursive as default, to stay backward compatible
+			noRecursiveFlag, _ := cmd.Flags().GetBool("norecursive")
+			recursiveFlag := !noRecursiveFlag
+			prefixPathFlag, _ := cmd.Flags().GetBool("prefixpath")
+			flags := util.Flags{
+				exportFlag,
+				inJsonFlag,
+				outJsonFlag,
+				upperFlag,
+				quoteFlag,
+				false,
+				recursiveFlag,
+				prefixPathFlag,
+			}
 			log.Debug().Msgf("Names/Paths: %s", args[0])
-			log.Debug().Msgf("Export: %t", exportFlag)
-			log.Debug().Msgf("Input JSON: %t", inJsonFlag)
-			log.Debug().Msgf("Output JSON: %t", outJsonFlag)
-			log.Debug().Msgf("Uppercase names: %t", upperFlag)
-			log.Debug().Msgf("Quote values: %t", quoteFlag)
+			log.Debug().Msgf("Flags: %+v", flags)
 			ssmClient := util.NewSSM()
-			result, err := ssmClient.GetParams(&args[0], inJsonFlag, upperFlag)
+			result, err := ssmClient.GetParams(&args[0], flags)
 			if err != nil {
 				log.Error().Msg(err.Error())
 				os.Exit(1)
 				return
 			}
 
-			output, err := ssmClient.GetOutputString(result, outJsonFlag, exportFlag, quoteFlag)
+			output, err := ssmClient.GetOutputString(result, flags)
 			if err != nil {
 				log.Error().Msg(err.Error())
 				os.Exit(1)
@@ -55,6 +65,8 @@ func init() { // nolint: gochecknoinits
 	getCmd.PersistentFlags().Bool("outjson", false, "Output everything as a json file. Does not make sense together with --export.")
 	getCmd.PersistentFlags().Bool("upper", false, "Make keys uppercase")
 	getCmd.PersistentFlags().Bool("quote", false, "Wrap values in quotes")
+	getCmd.PersistentFlags().Bool("norecursive", false, "Do not read recursively if getting a path")
+	getCmd.PersistentFlags().Bool("prefixpath", false, "Prefix names with the path")
 	rootCmd.AddCommand(getCmd)
 
 }

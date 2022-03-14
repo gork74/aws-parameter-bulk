@@ -31,6 +31,8 @@ and the parameters are filled with "valueOfParam1" etc.:
 /dev/other/other1
 /dev/other/other2
 /dev/testextend/param1
+/dev/path/param1
+/dev/path/subpath/subparam1
 someparam1
 someparam2
 jsonparam1
@@ -49,6 +51,31 @@ $ aws-parameter-bulk get /dev/test --upper
 PARAM1=valueOfParam1
 PARAM2=valueOfParam2
 PARAM3=valueOfParam3
+````
+
+## Get Path without recursion
+
+Paths will be read recursively by default, to turn that off supply the --norecursive flag.
+
+````bash
+$ aws-parameter-bulk get /dev/path --upper --norecursive
+PARAM1=valueOfParam1
+````
+Without the flag you would get:
+````bash
+$ aws-parameter-bulk get /dev/path --upper
+PARAM1=valueOfParam1
+SUBPARAM1=valueOfSubParam1
+````
+
+## Get Path with path prefix
+
+If you want to add the full path to the output, use the --prefixpath flag.
+
+````bash
+$ aws-parameter-bulk get /dev/path --prefixpath
+/dev/path/param1=valueOfParam1
+/dev/path/subpath/subparam1=valueOfSubParam1
 ````
 
 ## Get Multiple Paths
