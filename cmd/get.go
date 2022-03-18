@@ -24,7 +24,7 @@ func init() { // nolint: gochecknoinits
 		Run: func(cmd *cobra.Command, args []string) {
 			exportFlag, _ := cmd.Flags().GetBool("export")
 			inJsonFlag, _ := cmd.Flags().GetBool("injson")
-			outJsonFlag, _ := cmd.Flags().GetBool("injson")
+			outJsonFlag, _ := cmd.Flags().GetBool("outjson")
 			upperFlag, _ := cmd.Flags().GetBool("upper")
 			quoteFlag, _ := cmd.Flags().GetBool("quote")
 			// use recursive as default, to stay backward compatible

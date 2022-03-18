@@ -451,6 +451,20 @@ func Test_GetParams(t *testing.T) {
 			},
 			want: "/path3/Name3=Val3\n/path3/sub/NameSub=SubVal\n",
 		},
+		{
+			params: "/path3",
+			flags: Flags{
+				false,
+				false,
+				true,
+				false,
+				false,
+				false,
+				true,
+				true,
+			},
+			want: "{\n  \"/path3/Name3\": \"Val3\",\n  \"/path3/sub/NameSub\": \"SubVal\"\n}",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.params, func(t *testing.T) {
@@ -466,6 +480,10 @@ func Test_GetParams(t *testing.T) {
 			outputStr := fmt.Sprintf("%s", output)
 			wantStr := fmt.Sprintf("%s", tt.want)
 			if outputStr != wantStr {
+				fmt.Println("# Expected:")
+				fmt.Println(wantStr)
+				fmt.Println("# Output:")
+				fmt.Println(output)
 				t.Errorf("Expected '%s' but got '%s'", tt.want, output)
 			}
 		})
