@@ -20,7 +20,7 @@ func init() { // nolint: gochecknoinits
 			"This can be piped into an file (> .env), to be included via --env-file=.env\n" +
 			"or to be set in a shell environment (not recommended): export $(cat .env).\n" +
 			"Note: name output is unique, if two paths parameters have the same name, the value of the last name in the list wins\n" +
-			"Use --help for help on the flags: --export --injson --outjson --upper --quote --norecursive --prefixpath",
+			"Use --help for help on the flags: --export --injson --outjson --upper --quote --norecursive --prefixpath --prefixnormalizedpath",
 		Run: func(cmd *cobra.Command, args []string) {
 			exportFlag, _ := cmd.Flags().GetBool("export")
 			inJsonFlag, _ := cmd.Flags().GetBool("injson")
@@ -31,6 +31,7 @@ func init() { // nolint: gochecknoinits
 			noRecursiveFlag, _ := cmd.Flags().GetBool("norecursive")
 			recursiveFlag := !noRecursiveFlag
 			prefixPathFlag, _ := cmd.Flags().GetBool("prefixpath")
+			prefixNormalizedPathFlag, _ := cmd.Flags().GetBool("prefixnormalizedpath")
 			flags := util.Flags{
 				exportFlag,
 				inJsonFlag,
@@ -40,6 +41,7 @@ func init() { // nolint: gochecknoinits
 				false,
 				recursiveFlag,
 				prefixPathFlag,
+				prefixNormalizedPathFlag,
 			}
 			log.Debug().Msgf("Names/Paths: %s", args[0])
 			log.Debug().Msgf("Flags: %+v", flags)
@@ -67,6 +69,7 @@ func init() { // nolint: gochecknoinits
 	getCmd.PersistentFlags().Bool("quote", false, "Wrap values in quotes")
 	getCmd.PersistentFlags().Bool("norecursive", false, "Do not read recursively if getting a path")
 	getCmd.PersistentFlags().Bool("prefixpath", false, "Prefix names with the path")
+	getCmd.PersistentFlags().Bool("prefixnormalizedpath", false, "Prefix names with the normalized path")
 	rootCmd.AddCommand(getCmd)
 
 }

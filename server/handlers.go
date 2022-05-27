@@ -85,6 +85,7 @@ func (app *application) postHome(w http.ResponseWriter, r *http.Request) {
 		false,
 		recursiveLeft,
 		false,
+		false,
 	}
 	flagsRight := util.Flags{
 		false,
@@ -94,6 +95,7 @@ func (app *application) postHome(w http.ResponseWriter, r *http.Request) {
 		false,
 		false,
 		recursiveRight,
+		false,
 		false,
 	}
 

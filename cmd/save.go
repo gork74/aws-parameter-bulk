@@ -32,6 +32,7 @@ func init() { // nolint: gochecknoinits
 				dryFlag,
 				false,
 				false,
+				false,
 			}
 			log.Debug().Msgf("Filename: %s Path: %s", fileName, path)
 			log.Debug().Msgf("Flags: %+v", flags)

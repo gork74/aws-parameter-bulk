@@ -22,14 +22,15 @@ var (
 )
 
 type Flags struct {
-	Export     bool
-	InJson     bool
-	OutJson    bool
-	Upper      bool
-	Quote      bool
-	Dry        bool
-	Recursive  bool
-	PrefixPath bool
+	Export               bool
+	InJson               bool
+	OutJson              bool
+	Upper                bool
+	Quote                bool
+	Dry                  bool
+	Recursive            bool
+	PrefixPath           bool
+	PrefixNormalizedPath bool
 }
 
 type AWSSSM struct {
@@ -73,6 +74,12 @@ func NewSSM() *AWSSSM {
 func getNameAndValue(param *ssm.Parameter, flags Flags) (string, string, error) {
 	if flags.PrefixPath {
 		return getUpper(*param.Name, flags), *param.Value, nil
+	} else if flags.PrefixNormalizedPath {
+		prefixPath := getUpper(*param.Name, flags)
+		// remove first occurrence
+		normalizedPath := strings.Replace(prefixPath, "/", "", 1)
+		normalizedPath = strings.ReplaceAll(normalizedPath, "/", "_")
+		return normalizedPath, *param.Value, nil
 	} else {
 		split := strings.Split(*param.Name, "/")
 		name := split[len(split)-1]

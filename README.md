@@ -78,6 +78,17 @@ $ aws-parameter-bulk get /dev/path --prefixpath
 /dev/path/subpath/subparam1=valueOfSubParam1
 ````
 
+## Get Path with normalized path prefix
+
+If you want to add the full path to the output, with underscores as separator (to make it bash variable compliant),
+use the --prefixnormalizedpath flag. The first slash of the path is not replaced with an underscore, it will be removed.
+
+````bash
+$ aws-parameter-bulk get /dev/path --prefixnormalizedpath
+dev_path_param1=valueOfParam1
+dev_path_subpath_subparam1=valueOfSubParam1
+````
+
 ## Get Multiple Paths
 
 You can supply multiple paths:
