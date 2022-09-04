@@ -535,3 +535,51 @@ func Test_GetParams(t *testing.T) {
 		})
 	}
 }
+
+func Test_ReadParametersFromFile(t *testing.T) {
+	tests := []struct {
+		fileName string
+		basePath string
+		flags    Flags
+		want     string
+	}{
+		{
+			fileName: "test.env",
+			basePath: "/saveTest",
+			flags: Flags{
+				false,
+				false,
+				false,
+				false,
+				false,
+				true,
+				true,
+				false,
+				false,
+			},
+			want: "One1=Value1\nOne2=Value2\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.fileName, func(t *testing.T) {
+			ssmClient := NewSSM()
+			ssmClient.SSM = &MockSSM{
+				err: nil, //errors.New("my custom error"),
+			}
+			params, err := ssmClient.ReadParametersFromFile(tt.fileName, tt.basePath, tt.flags)
+			if err != nil {
+				t.Error("Error in ReadParametersFromFile")
+			}
+			output, err := ssmClient.GetOutputString(params, tt.flags)
+			outputStr := fmt.Sprintf("%s", output)
+			wantStr := fmt.Sprintf("%s", tt.want)
+			if outputStr != wantStr {
+				fmt.Println("# Expected:")
+				fmt.Println(wantStr)
+				fmt.Println("# Output:")
+				fmt.Println(output)
+				t.Errorf("Expected '%s' but got '%s'", tt.want, output)
+			}
+		})
+	}
+}

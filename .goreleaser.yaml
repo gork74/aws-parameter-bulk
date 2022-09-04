@@ -1,7 +1,11 @@
 env:
   - GO111MODULE=on
+  - APPVERSION=${{ env.GITHUB_REF_NAME }}
 before:
   hooks:
+    - sed -i "s/v[0-9]\.[0-9]\.[0-9]/${APPVERSION}/g" conf/version.go > conf/version.temp
+    - rm conf/version.go
+    - mv conf/version.temp conf/version.go
     - go mod tidy
     - go generate ./...
 builds:
@@ -50,3 +54,17 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+universal_binaries:
+  - replace: true
+
+brews:
+  -
+    name: aws-parameter-bulk
+    homepage: "https://github.com/gork74/aws-parameter-bulk"
+    tap:
+      owner: gork74
+      name: homebrew-gork74
+    commit_author:
+      name: Adam Malik
+      email: work@adam-malik.de

@@ -225,11 +225,19 @@ func (f *AWSSSM) ReadParametersFromFile(fileName string, path string, flags Flag
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			log.Debug().Msgf("READ LINE: %s", scanner.Text())
-			data := strings.SplitN(scanner.Text(), "=", 2)
-			name := data[0]
-			value := data[1]
-			log.Debug().Msgf("NAME: %s VALUE: %s", name, value)
-			params[name] = value
+			if strings.Index(scanner.Text(), "=") < 1 {
+				log.Info().Msgf("Ignoring line: %s", scanner.Text())
+			} else {
+				data := strings.SplitN(scanner.Text(), "=", 2)
+				name := data[0]
+				value := data[1]
+				if name != "" {
+					log.Debug().Msgf("NAME: %s VALUE: %s", name, value)
+					params[name] = value
+				} else {
+					log.Info().Msgf("Ignoring line: %s", scanner.Text())
+				}
+			}
 		}
 		if err := scanner.Err(); err != nil {
 			log.Error().Msg(err.Error())
@@ -254,8 +262,6 @@ func (f *AWSSSM) SaveParametersFromFile(fileName string, basePath string, flags 
 		fmt.Println("### Dry run, not saving, this would have been set:")
 		fmt.Println(result)
 		return nil
-	} else {
-		return f.SaveParameters(params, basePath)
 	}
 	return f.SaveParameters(params, basePath)
 }
