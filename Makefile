@@ -29,6 +29,13 @@ dev:
 	SSM_LOG_LEVEL=debug go run main/main.go
 
 # install goreleaser first
-.PHONE: release-snapshot
+.PHONY: release-snapshot
 release-snapshot:
 	goreleaser release --snapshot --rm-dist
+
+.PHONY: setversion
+setversion:
+	if [ -z "$(GITHUB_REF_NAME)" ]; then echo "GITHUB_REF_NAME is not set"; exit 1; fi
+	sed "s/v[0-9]\.[0-9]\.[0-9]/${GITHUB_REF_NAME}/g" conf/version.go > conf/version.temp
+	rm conf/version.go
+	mv conf/version.temp conf/version.go
