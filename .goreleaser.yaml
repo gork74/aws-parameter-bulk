@@ -2,9 +2,6 @@ env:
   - GO111MODULE=on
 before:
   hooks:
-    - sed "s/v[0-9]\.[0-9]\.[0-9]/{{.Tag}}/g" conf/version.go > conf/version.temp
-    - rm conf/version.go
-    - mv conf/version.temp conf/version.go
     - go mod tidy
     - go generate ./...
 builds:
