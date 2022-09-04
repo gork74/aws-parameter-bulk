@@ -9,6 +9,14 @@ Have your AWS CLI set up correctly. See below for instructions.
 
 The output can be used as .env in your development workspace, as --from-env in docker, or as Kubernetes secret.
 
+## Install via Homebrew
+
+```bash
+$ brew tap gork74/gork74
+
+$ brew install aws-parameter-bulk
+```
+
 ## Usage
 
 `get` reads names from single values, or from a path recursively.
