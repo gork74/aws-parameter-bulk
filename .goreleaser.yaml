@@ -5,7 +5,8 @@ before:
     - go mod tidy
     - go generate ./...
 builds:
-  - env:
+  - binary: aws-parameter-bulk
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
