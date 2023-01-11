@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/gork74/aws-parameter-bulk/ui"
 	"net/http"
 	"strings"
 
@@ -37,7 +38,7 @@ func (nfs neuteredFileSystem) Open(path string) (http.File, error) {
 func (app *application) routes() http.Handler {
 	standardMiddleware := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
-	fileServer := http.FileServer(neuteredFileSystem{http.Dir("./ui/static/")})
+	fileServer := http.FileServer(http.FS(ui.Files))
 
 	dynamicMiddleware := alice.New(app.session.LoadAndSave, noSurf)
 
