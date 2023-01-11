@@ -1,6 +1,6 @@
 module github.com/gork74/aws-parameter-bulk
 
-go 1.17
+go 1.19
 
 require (
 	github.com/alexedwards/scs/v2 v2.5.0
@@ -30,5 +30,5 @@ require (
 	golang.org/x/net v0.0.0-20191126235420-ef20fe5d7933 // indirect
 	golang.org/x/sys v0.0.0-20191128015809-6d18c012aee9 // indirect
 	golang.org/x/text v0.3.2 // indirect
-	gopkg.in/yaml.v2 v2.2.2 // indirect
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 )

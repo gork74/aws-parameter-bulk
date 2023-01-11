@@ -28,7 +28,7 @@ func ListenAndServe(logger *zerolog.Logger, address string) {
 	session := scs.New()
 	session.Lifetime = 24 * 30 * time.Hour
 
-	templateCache, err := newTemplateCache("./ui/html/")
+	templateCache, err := newTemplateCache()
 	if err != nil {
 		logger.Fatal().Msgf("Template cache Error %s", err)
 	}

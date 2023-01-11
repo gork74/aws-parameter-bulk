@@ -4,7 +4,9 @@ import (
 	"encoding/gob"
 	"github.com/gork74/aws-parameter-bulk/pkg/forms"
 	"github.com/gork74/aws-parameter-bulk/pkg/models"
+	"github.com/gork74/aws-parameter-bulk/ui"
 	"html/template"
+	"io/fs"
 	"path/filepath"
 )
 
@@ -33,14 +35,14 @@ type templateData struct {
 // custom template functions and the functions themselves.
 var functions = template.FuncMap{}
 
-func newTemplateCache(dir string) (map[string]*template.Template, error) {
+func newTemplateCache() (map[string]*template.Template, error) {
 	// Initialize a new map to act as the cache.
 	cache := map[string]*template.Template{}
 
-	// Use the filepath.Glob function to get a slice of all filepaths with
-	// the extension '.page.tmpl'. This essentially gives us a slice of all the
+	// Use the fs.Glob function to get a slice of all filepaths with
+	// the extension '.tmpl'. This essentially gives us a slice of all the
 	// 'page' templates for the application.
-	pages, err := filepath.Glob(filepath.Join(dir, "*.page.tmpl"))
+	pages, err := fs.Glob(ui.Files, "html/*.tmpl")
 	if err != nil {
 		return nil, err
 	}
@@ -51,27 +53,14 @@ func newTemplateCache(dir string) (map[string]*template.Template, error) {
 		// and assign it to the name variable.
 		name := filepath.Base(page)
 
-		// The template.FuncMap must be registered with the template set before you
-		// call the ParseFiles() method. This means we have to use template.New() to
-		// create an empty template set, use the Funcs() method to register the
-		// template.FuncMap, and then parse the file as normal.
-		ts, err := template.New(name).Funcs(functions).ParseFiles(page)
-		if err != nil {
-			return nil, err
+		patterns := []string{
+			"html/*.layout.tmpl",
+			"html/*.page.tmpl",
+			"html/*.partial.tmpl",
+			page,
 		}
 
-		// Use the ParseGlob method to add any 'layout' templates to the
-		// template set (in our case, it's just the 'base' layout at the
-		// moment).
-		ts, err = ts.ParseGlob(filepath.Join(dir, "*.layout.tmpl"))
-		if err != nil {
-			return nil, err
-		}
-
-		// Use the ParseGlob method to add any 'partial' templates to the
-		// template set (in our case, it's just the 'footer' partial at the
-		// moment).
-		ts, err = ts.ParseGlob(filepath.Join(dir, "*.partial.tmpl"))
+		ts, err := template.New(name).Funcs(functions).ParseFS(ui.Files, patterns...)
 		if err != nil {
 			return nil, err
 		}

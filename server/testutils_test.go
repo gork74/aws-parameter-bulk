@@ -114,7 +114,7 @@ func newTestApplication(t *testing.T) *application {
 	logger := zerolog.New(output).With().Timestamp().Caller().Logger()
 
 	// Create an instance of the template cache.
-	templateCache, err := newTemplateCache("./../ui/html/")
+	templateCache, err := newTemplateCache()
 	if err != nil {
 		t.Fatal(err)
 	}
