@@ -41,7 +41,7 @@ func nameString(parameter ssm.GetParametersInput) string {
 
 func (sp *MockSSM) GetParameter(input *ssm.GetParameterInput) (*ssm.GetParameterOutput, error) {
 	output := new(ssm.GetParameterOutput)
-	log.Info().Msgf("%s", input.Name)
+	log.Info().Msgf("%s", *input.Name)
 	if *input.Name == "One1" {
 		name1 := "One1"
 		output.Parameter = &ssm.Parameter{Name: &name1, Value: aws.String("OneVal1")}
