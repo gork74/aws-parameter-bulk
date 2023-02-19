@@ -150,6 +150,16 @@ SOMEPARAM1=valueOfSomeParam1
 SOMEPARAM2=valueOfSomeParam2
 ````
 
+## Get Single Parameters on a path
+
+Reading single SSM Parameters on a path.
+
+````bash
+$ aws-parameter-bulk get /dev/test/param1,/dev/test/param2 --upper
+PARAM1=valueOfParam1
+PARAM2=valueOfParam2
+````
+
 ## Get Parameters Containing JSON
 
 Reading SSM Parameters containing JSON, parsing and converting them. This also works for path parameters. Each parameter has to be json. 

@@ -127,8 +127,21 @@ func (f *AWSSSM) GetParametersByPath(paths []string, flags Flags) (map[string]st
 			}
 			log.Debug().Msgf("Retrieved Parameters for path %s: %s", path, output.Parameters)
 			if len(output.Parameters) == 0 {
-				log.Error().Msgf("No names found for path: %s", path)
-				return params, ErrNameNotFound
+				// if no parameters are found, try to get the parameter as a single value
+				inputSingle := &ssm.GetParameterInput{
+					Name:           &path,
+					WithDecryption: &trueBool,
+				}
+				outputSingle, err := f.SSM.GetParameter(inputSingle)
+				if err != nil {
+					// if this also fails, no path or parameter on path exists
+					log.Error().Msgf("No names found for path: %s", path)
+					return params, ErrNameNotFound
+				}
+				nameSingle, value, _ := getNameAndValue(outputSingle.Parameter, flags)
+				log.Debug().Msgf("Retrieved Parameter for %s: %s", path, nameSingle)
+				params[nameSingle] = value
+				break
 			}
 
 			for _, param := range output.Parameters {

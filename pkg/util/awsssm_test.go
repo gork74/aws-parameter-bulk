@@ -25,6 +25,16 @@ func nameString(parameter ssm.GetParametersInput) string {
 	return result + "]"
 }
 
+func (sp *MockSSM) GetParameter(input *ssm.GetParameterInput) (*ssm.GetParameterOutput, error) {
+	output := new(ssm.GetParameterOutput)
+	log.Info().Msgf("%s", *input.Name)
+	if *input.Name == "/path2/One1" {
+		name1 := "One1"
+		output.Parameter = &ssm.Parameter{Name: &name1, Value: aws.String("OneVal1")}
+	}
+	return output, sp.err
+}
+
 func (sp *MockSSM) GetParameters(input *ssm.GetParametersInput) (*ssm.GetParametersOutput, error) {
 	output := new(ssm.GetParametersOutput)
 	log.Info().Msgf("%s", nameString(*input))
@@ -300,6 +310,21 @@ func Test_GetParams(t *testing.T) {
 				false,
 			},
 			want: "ONE1=OneVal1\nONE2=OneVal2\n",
+		},
+		{
+			params: "/path2/One1,/path3",
+			flags: Flags{
+				false,
+				false,
+				false,
+				true,
+				false,
+				false,
+				true,
+				false,
+				false,
+			},
+			want: "NAME3=Val3\nNAMESUB=SubVal\nONE1=OneVal1\n",
 		},
 		{
 			params: "One1",
