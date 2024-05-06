@@ -28,13 +28,7 @@ builds:
         goarch: arm64
     main: ./main/main.go
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
-    format_overrides:
+  - format_overrides:
       - goos: windows
         format: zip
     files:
@@ -59,7 +53,7 @@ brews:
   -
     name: aws-parameter-bulk
     homepage: "https://github.com/gork74/aws-parameter-bulk"
-    tap:
+    repository:
       owner: gork74
       name: homebrew-gork74
     commit_author:
