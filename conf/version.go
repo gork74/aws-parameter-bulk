@@ -4,5 +4,5 @@ var (
 	// Executable name
 	Executable = "aws-parameter-bulk"
 	// Version value
-	Version = "v0.0.9"
+	Version = "v0.0.10"
 )
