@@ -31,3 +31,8 @@ git push
 git tag "${NEW_VERSION?}"
 git push --tags
 ```
+
+In case the tag has to be deleted:
+```shell
+git push --delete origin "${NEW_VERSION?}"
+```
