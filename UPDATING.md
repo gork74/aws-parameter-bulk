@@ -24,6 +24,9 @@ cat conf/version.go
 ```shell
 git add .
 git commit -m"feat: update dependencies"
-git tag -a "${NEW_VERSION?}"
+```
+
+```shell
+git tag "${NEW_VERSION?}"
 git push --tags
 ```
