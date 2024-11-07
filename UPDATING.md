@@ -34,5 +34,6 @@ git push --tags
 
 In case the tag has to be deleted:
 ```shell
-git push --delete origin "${NEW_VERSION?}"
+git tag -d "${NEW_VERSION?}"
+git push origin ":refs/tags/${NEW_VERSION?}"
 ```
