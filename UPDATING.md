@@ -24,6 +24,7 @@ cat conf/version.go
 ```shell
 git add .
 git commit -m"feat: update dependencies"
+git push
 ```
 
 ```shell
