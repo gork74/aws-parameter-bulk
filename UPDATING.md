@@ -37,3 +37,14 @@ In case the tag has to be deleted:
 git tag -d "${NEW_VERSION?}"
 git push origin ":refs/tags/${NEW_VERSION?}"
 ```
+
+# Scan for vulnerabilities
+
+Build
+```shell
+CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./bin/aws-parameter-bulk-darwin-arm64 main/main.go
+```
+Scan
+```shell
+trivy rootfs bin/aws-parameter-bulk-darwin-arm64
+```
