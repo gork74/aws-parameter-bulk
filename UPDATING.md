@@ -13,7 +13,7 @@ go test ./... -parallel=1
 ```
 
 ```shell
-export NEW_VERSION=v0.0.13
+export NEW_VERSION=v0.0.14
 ```
 
 ```shell
