@@ -1,7 +1,6 @@
 module github.com/gork74/aws-parameter-bulk
 
 go 1.23.0
-
 require (
 	github.com/alexedwards/scs/v2 v2.8.0
 	github.com/aws/aws-sdk-go v1.55.6
@@ -10,7 +9,7 @@ require (
 	github.com/justinas/nosurf v1.1.1
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.9.1
-	github.com/spf13/viper v1.20.0
+	github.com/spf13/viper v1.20.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
