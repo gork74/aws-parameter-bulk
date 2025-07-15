@@ -2,12 +2,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/alexedwards/scs/v2"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ssm"
-	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
-	"github.com/gork74/aws-parameter-bulk/pkg/util"
-	"github.com/rs/zerolog/log"
 	"html"
 	"io/ioutil"
 	"net/http"
@@ -16,8 +10,16 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/alexedwards/scs/v2"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
+	"github.com/gork74/aws-parameter-bulk/pkg/util"
+	"github.com/rs/zerolog/log"
 
 	"github.com/gork74/aws-parameter-bulk/conf"
 	"github.com/rs/zerolog"
@@ -181,7 +183,16 @@ func newTestServer(t *testing.T, h http.Handler) *testServer {
 // request to a given url path on the test server, and returns the response
 // status code, headers and body.
 func (ts *testServer) get(t *testing.T, urlPath string, wantBody bool) (int, http.Header, []byte) {
-	rs, err := ts.Client().Get(ts.URL + urlPath)
+	// Create a new request with Origin header for nosurf v1.2.0 compatibility
+	req, err := http.NewRequest("GET", ts.URL+urlPath, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Add Origin header to satisfy nosurf v1.2.0 origin validation
+	req.Header.Set("Origin", ts.URL)
+
+	rs, err := ts.Client().Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,7 +214,17 @@ func (ts *testServer) get(t *testing.T, urlPath string, wantBody bool) (int, htt
 // The final parameter to this method is a url.Values object which can contain
 // any data that you want to send in the request body.
 func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values, wantBody bool) (int, http.Header, []byte) {
-	rs, err := ts.Client().PostForm(ts.URL+urlPath, form)
+	// Create a new request with Origin header for nosurf v1.2.0 compatibility
+	req, err := http.NewRequest("POST", ts.URL+urlPath, strings.NewReader(form.Encode()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Set required headers for form POST
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Origin", ts.URL)
+
+	rs, err := ts.Client().Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
