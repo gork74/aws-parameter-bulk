@@ -1,6 +1,6 @@
 module github.com/gork74/aws-parameter-bulk
 
-go 1.23.0
+go 1.24.13
 
 require (
 	github.com/alexedwards/scs/v2 v2.9.0
